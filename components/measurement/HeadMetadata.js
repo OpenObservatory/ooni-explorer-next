@@ -1,5 +1,6 @@
 import React from 'react'
 import Head from 'next/head'
+import { useRouter } from 'next/router'
 import PropTypes from 'prop-types'
 import { useIntl } from 'react-intl'
 import { getTestMetadata } from '../utils'
@@ -11,6 +12,7 @@ const HeadMetadata = ({
   date,
   content
 }) => {
+  const { asPath } = useRouter()
   const intl = useIntl()
   let description = ''
 
@@ -37,6 +39,10 @@ const HeadMetadata = ({
 
   const metaDescription = `OONI data suggests ${description} on ${formattedDate}, find more open data on internet censorship on OONI Explorer.`
 
+  const origin = typeof window === 'undefined'
+    ? 'https://explorer.ooni.org'
+    : window.location.origin
+
   return (
     <Head>
       <title>
@@ -50,6 +56,10 @@ const HeadMetadata = ({
       <meta
         name="description"
         content={metaDescription}
+      />
+      <meta
+        property='og:image'
+        content={`${origin}/screenshot${asPath}`}
       />
     </Head>
   )

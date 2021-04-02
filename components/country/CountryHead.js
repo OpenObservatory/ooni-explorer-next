@@ -3,11 +3,16 @@ import Head from 'next/head'
 import { useIntl } from 'react-intl'
 
 const CountryHead = ({
+  countryCode,
   countryName,
   measurementCount,
   networkCount
 }) => {
   const intl = useIntl()
+  const origin = typeof window === 'undefined'
+    ? 'https://explorer.ooni.org'
+    : window.location.origin
+
   return (
     <Head>
       <title>Internet Censorship in {countryName} | OONI Explorer</title>
@@ -41,7 +46,11 @@ const CountryHead = ({
           networkCount: intl.formatNumber(networkCount)
         })}
       />
-
+      <meta
+        key="og:image"
+        property="og:image"
+        content={`${origin}/screenshot/country/${countryCode}`}
+      />
     </Head>
   )
 }

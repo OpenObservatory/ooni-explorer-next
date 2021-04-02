@@ -12,6 +12,8 @@ import DetailsHeader from '../components/measurement/DetailsHeader'
 import SummaryText from '../components/measurement/SummaryText'
 import CommonDetails from '../components/measurement/CommonDetails'
 import MeasurementContainer from '../components/measurement/MeasurementContainer'
+import { ScreenshotProvider } from '../components/ScreenshotContext'
+import ScreenshotWrapper from '../components/ScreenshotWrapper'
 import MeasurementNotFound from '../components/measurement/MeasurementNotFound'
 import HeadMetadata from '../components/measurement/HeadMetadata'
 
@@ -89,6 +91,7 @@ export async function getServerSideProps({ query }) {
       // Measurement not found
       initialProps.notFound = true
     }
+    initialProps['screenshot'] = query.screenshot ? true : false
   } catch (e) {
     initialProps.errors.push(e.message)
   }
@@ -111,6 +114,7 @@ const Measurement = ({
   input,
   raw_measurement,
   report_id,
+  screenshot,
   ...rest
 }) => {
 
@@ -124,88 +128,118 @@ const Measurement = ({
   }
 
   return (
-    <Layout>
-      <Head>
-        <title>OONI Explorer</title>
-      </Head>
-      {notFound ? (
-        <MeasurementNotFound />
-      ): (
-        <MeasurementContainer
-          isConfirmed={confirmed}
-          isAnomaly={anomaly}
-          isFailure={failure}
-          testName={test_name}
-          country={country}
-          measurement={raw_measurement}
-          input={input}
-          test_start_time={test_start_time}
-          probe_asn={probe_asn}
-          {...rest}
+    <ScreenshotProvider screenshot={screenshot}>
+      <Layout>
+        <Head>
+          <title>OONI Explorer</title>
+        </Head>
+        {notFound ? (
+          <MeasurementNotFound />
+        ): (
+          <MeasurementContainer
+            isConfirmed={confirmed}
+            isAnomaly={anomaly}
+            isFailure={failure}
+            testName={test_name}
+            country={country}
+            measurement={raw_measurement}
+            input={input}
+            test_start_time={test_start_time}
+            probe_asn={probe_asn}
+            {...rest}
 
-          render={({
-            status = 'default',
-            statusIcon,
-            statusLabel,
-            statusInfo,
-            legacy = false,
-            summaryText,
-            headMetadata,
-            details
-          }) => (
-            <React.Fragment>
-              {headMetadata &&
-                <HeadMetadata
-                  content={headMetadata}
-                  testName={test_name}
-                  testUrl={input}
-                  country={country}
-                  date={test_start_time}
-                />
-              }
-              <NavBar color={pageColors[status]} />
-              <Hero
-                color={pageColors[status]}
-                status={status}
-                icon={statusIcon}
-                label={statusLabel}
-                info={statusInfo}
-              />
-              <CommonSummary
-                test_start_time={test_start_time}
-                probe_asn={probe_asn}
-                probe_cc={probe_cc}
-                color={pageColors[status]}
-                country={country}
-              />
-
-              <Container>
-                <DetailsHeader
-                  testName={test_name}
-                  runtime={raw_measurement?.test_runtime}
-                  notice={legacy}
-                  url={`measurement/${report_id}`}
-                />
-                {summaryText &&
-                  <SummaryText
+            render={({
+              status = 'default',
+              statusIcon,
+              statusLabel,
+              statusInfo,
+              legacy = false,
+              summaryText,
+              headMetadata,
+              details
+            }) => (
+              <React.Fragment>
+                {headMetadata &&
+                  <HeadMetadata
+                    content={headMetadata}
                     testName={test_name}
                     testUrl={input}
-                    network={probe_asn}
                     country={country}
                     date={test_start_time}
-                    content={summaryText}
                   />
                 }
-                {details}
-                <CommonDetails
-                  measurement={raw_measurement}
-                  reportId={report_id}
-                />
-              </Container>
-            </React.Fragment>
-          )} />
-      )}
-    </Layout>
+                {screenshot ? (
+                  <React.Fragment>
+                    <ScreenshotWrapper
+                      color={pageColors[status]}
+                    >
+                      <NavBar color={pageColors[status]} />
+                      <Hero
+                        color={pageColors[status]}
+                        status={status}
+                        icon={statusIcon}
+                        label={statusLabel}
+                        info={statusInfo}
+                      />
+                      <CommonSummary
+                        test_start_time={test_start_time}
+                        probe_asn={probe_asn}
+                        probe_cc={probe_cc}
+                        color={pageColors[status]}
+                        country={country}
+                      />
+                    </ScreenshotWrapper>
+                  </React.Fragment>
+                ) : (
+                  <React.Fragment>
+                    <NavBar color={pageColors[status]} />
+                    <Hero
+                      color={pageColors[status]}
+                      status={status}
+                      icon={statusIcon}
+                      label={statusLabel}
+                      info={statusInfo}
+                    />
+                    <CommonSummary
+                      test_start_time={test_start_time}
+                      probe_asn={probe_asn}
+                      probe_cc={probe_cc}
+                      color={pageColors[status]}
+                      country={country}
+                    />
+                  </React.Fragment>
+                )}
+
+                {!screenshot &&
+                  <Container>
+                    <DetailsHeader
+                      testName={test_name}
+                      runtime={raw_measurement?.test_runtime}
+                      notice={legacy}
+                      url={`measurement/${report_id}`}
+                    />
+                    {summaryText &&
+                      <SummaryText
+                        testName={test_name}
+                        testUrl={input}
+                        network={probe_asn}
+                        country={country}
+                        date={test_start_time}
+                        content={summaryText}
+                      />
+                    }
+                    {details}
+                    <CommonDetails
+                      measurement={raw_measurement}
+                      reportId={report_id}
+                    />
+                  </Container>
+                }
+              </React.Fragment>
+            )} />
+        )}
+      </Layout>
+    </ScreenshotProvider>
   )
 }
 

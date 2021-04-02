@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import { MatomoProvider, createInstance } from '@datapunt/matomo-tracker-react'
 import { createGlobalStyle, ThemeProvider } from 'styled-components'
 import { theme } from 'ooni-components'
+import { useScreenshot } from './ScreenshotContext'
 
 import Header from './Header'
 import Footer from './Footer'
@@ -51,6 +52,8 @@ const matomoInstance = createInstance({
 })
 
 const Layout = ({ children, disableFooter = false }) => {
+  const { isScreenshot } = useScreenshot()
+
   useEffect(() => {
     matomoInstance.trackPageView()
   }, [])
@@ -64,9 +67,9 @@ const Layout = ({ children, disableFooter = false }) => {
           <div className="content">
             { children }
           </div>
-          {!disableFooter && <Footer />}
+          {!disableFooter && !isScreenshot && <Footer />}
         </div>
-        <FeedbackButton />
+        {!isScreenshot && <FeedbackButton />}
       </ThemeProvider>
     </MatomoProvider>
   )

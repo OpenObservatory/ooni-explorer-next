@@ -74,6 +74,7 @@
     "eslint-plugin-react": "^7.22.0",
     "glob": "^7.1.6",
     "mustache": "^2.3.0",
+    "puppeteer": "^5.0.0",
     "start-server-and-test": "^1.10.8"
   },
   "scripts": {
