@@ -8,6 +8,7 @@ import { useDebugContext } from '../DebugContext'
 import { Flex, Box } from 'ooni-components'
 import { getCategoryCodesMap } from '../../utils/categoryCodes'
 import countryUtil from 'country-util'
+import { Bar } from '@nivo/bar'
 
 // all props are passed by the List component
 const Row = ({ index, style, data }) => {
@@ -76,7 +77,18 @@ const getRowLabel = (key, yAxis) => {
   }
 }
 
+function getDatesBetween(startDate, endDate) {
+  const dateArray = new Set()
+  var currentDate = startDate
+  while (currentDate <= endDate) {
+    dateArray.add(currentDate.toISOString().slice(0, 10))
+    currentDate.setDate(currentDate.getDate() + 1)
+  }
+  return dateArray
+}
+
 const reshapeData = (data, query) => {
+  const dateSet = getDatesBetween(new Date(query.since), new Date(query.until))
   const reshapedData = {}
   const rows = []
   const rowLabels = {}
@@ -91,6 +103,27 @@ const reshapeData = (data, query) => {
       rowLabels[key] = getRowLabel(key, query.axis_y)
     }
   })
+
+  for (const y in reshapedData) {
+    const datesInRow = reshapedData[y].map(i => i.measurement_start_day)
+    const missingDates = [...dateSet].filter(x => !datesInRow.includes(x))
+
+    // Add empty datapoints for dates where measurements are not available
+    missingDates.forEach((date) => {
+      // use any (first) column data to popuplate yAxis value e.g `input` | `probe_cc`
+      // and then overwrite with zero-data for that missing date
+      reshapedData[y].splice([...dateSet].indexOf(date), 0, {
+        ...reshapedData[y][0],
+        measurement_start_day: date,
+        anomaly_count: 0,
+        confirmed_count: 0,
+        failure_count: 0,
+        measurement_count: 0,
+        ok_count: 0,
+      })
+    })
+  }
+
   return [reshapedData, rows, rowLabels]
 }
 
@@ -112,7 +145,7 @@ const GridChart = ({ data, query }) => {
   // FIX: Use the first row to generate the static xAxis outside the charts.
   //  * it is dependent on the width of the charts which is hard coded in `RowChart.js`
   //  * it may not work well if the first row has little or no data
-  const sampleRow = reshapedData[rows[0]]
+  const dateSet = [...getDatesBetween(new Date(query.since), new Date(query.until))]
 
   return (
     <Flex flexDirection='column' sx={{ height: '100%'}}>
@@ -120,16 +153,27 @@ const GridChart = ({ data, query }) => {
       <Flex>
         <Box width={2/16}>
         </Box>
-        <Flex pb={2} sx={{ width: '1000px', borderBottom: '1px solid black' }} justifyContent='space-between'>
-          <Box>
-            {sampleRow[0]['measurement_start_day']}
-          </Box>
-          <Box>
-            {sampleRow[Math.floor(sampleRow.length/2)]['measurement_start_day']}
-          </Box>
-          <Box>
-            {sampleRow[sampleRow.length-1]['measurement_start_day']}
-          </Box>
+        <Flex sx={{ width: '1000px' }} justifyContent='space-between'>
+          <Bar
+            data={reshapedData[rows[0]]}
+            indexBy={query.axis_x}
+            width={1000}
+            height={70}
+            margin={{ top: 60, right: 40, bottom: 0, left: 0 }}
+            padding={0.3}
+            layers={['axes']}
+            axisTop={{
+              enable: true,
+              tickSize: 5,
+              tickPadding: 5,
+              tickRotation: -45,
+              tickValues: dateSet
+            }}
+            xScale={{ type: 'time' }}
+            axisBottom={null}
+            axisLeft={null}
+            axisRight={null}
+          />
         </Flex>
       </Flex>
       <AutoSizer>

@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Box, Flex } from 'ooni-components'
+import { Box, Flex, Text } from 'ooni-components'
 import { Bar } from '@nivo/bar'
 
 const keys = [
@@ -19,13 +19,35 @@ const colorMap = {
 
 const colorFunc = (d) => colorMap[d.id] || '#ccc'
 
+const TooltipRow = ({ color, label, value }) => (
+  <Flex alignItems='center'>
+    <Box mx={1} sx={{ height: '12px', width: '12px'}} bg={color} />
+    <Text mr={2} fontWeight='bold'>{label}</Text>
+    <Box ml='auto'>{value}</Box>
+  </Flex>
+)
+
+const CustomToolTip = ({
+  data
+}) => {
+  return (
+    <Flex flexDirection='column'>
+      <Text mr={2} fontWeight='bold'>{data['measurement_start_day']}</Text>
+      {keys.map((k, index) => (
+        <TooltipRow key={index} color={colorMap[k]} label={k} value={data[k]} />
+      ))}
+      <TooltipRow label='Total' value={data['measurement_count']} />
+    </Flex>
+  )
+}
+
 const RowChart = ({ data, indexBy, label, height, /* width, first, last */}) => {
   return (
-    <Flex alignItems='center'>
+    <Flex alignItems='center' >
       <Box width={2/16}>
         {label}
       </Box>
-      <Box>
+      <Box sx={{ borderBottom: '0px solid grey'}}>
         <Bar
           data={data}
           keys={keys}
@@ -48,6 +70,7 @@ const RowChart = ({ data, indexBy, label, height, /* width, first, last */}) => 
           xScale={{ type: 'time' }}
           axisBottom={null}
           axisLeft={null}
+          enableGridX={true}
           labelSkipWidth={100}
           labelSkipHeight={100}
           labelTextColor={{ from: 'color', modifiers: [ [ 'darker', 1.6 ] ] }}
@@ -55,6 +78,7 @@ const RowChart = ({ data, indexBy, label, height, /* width, first, last */}) => 
           animate={false}
           motionStiffness={90}
           motionDamping={15}
+          tooltip={CustomToolTip}
         />
 
       </Box>
@@ -73,7 +97,7 @@ RowChart.propTypes = {
   })),
   height: PropTypes.number,
   indexBy: PropTypes.string,
-  label: PropTypes.element,
+  label: PropTypes.node,
 }
 
 export default RowChart
